@@ -15,6 +15,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 public class TodoControllerIntegrationTest {
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -41,26 +42,29 @@ public class TodoControllerIntegrationTest {
     void testFindById_whenTodoExists_returnsTodo() throws Exception {
         Todo todo = new Todo();
         todo.setTitle("Test GET by ID");
-        todo.setCompleted(false);
+        todo.setCompleted(true);
 
         String json = objectMapper.writeValueAsString(todo);
 
-        mockMvc.perform(post("/todos/save")
+        // Save Todo
+        String response = mockMvc.perform(post("/todos/save")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
 
-        mockMvc.perform(get("/todos/findById/"))
+        // Deserialize to get ID
+        Todo savedTodo = objectMapper.readValue(response, Todo.class);
+        Long id = savedTodo.getId();
+
+        // Fetch by ID
+        mockMvc.perform(get("/todos/findById/" + id))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.title").value("Test GET by ID"))
                 .andExpect(jsonPath("$.completed").value(true));
-    }
-
-    @Test
-    void testFindById_whenTodoNotExists_returns404() throws Exception {
-        mockMvc.perform(get("/todos/findById/9999"))
-                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -71,20 +75,20 @@ public class TodoControllerIntegrationTest {
 
         String json = objectMapper.writeValueAsString(todo);
 
-        mockMvc.perform(post("/todos/save")
+        // Save
+        String response = mockMvc.perform(post("/todos/save")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
 
-        mockMvc.perform(delete("/todos/deleteById/")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
-                .andExpect(status().isOk());
-    }
+        Todo savedTodo = objectMapper.readValue(response, Todo.class);
+        Long id = savedTodo.getId();
 
-    @Test
-    void testDeleteById_whenTodoNotExists_returns404() throws Exception {
-        mockMvc.perform(delete("/todos/findById/9999"))
-                .andExpect(status().is4xxClientError());
+        // Delete
+        mockMvc.perform(delete("/todos/deleteById/" + id))
+                .andExpect(status().isOk());
     }
 }

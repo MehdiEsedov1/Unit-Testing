@@ -24,8 +24,8 @@ public class TodoController {
     }
 
     @PostMapping("/save")
-    public void save(@RequestBody Todo todo) {
-        service.save(todo);
+    public Todo save(@RequestBody Todo todo) {
+        return service.save(todo);
     }
 
     @DeleteMapping("/deleteById/{id}")

@@ -20,8 +20,8 @@ public class TodoService {
         return repo.findById(id).orElseThrow(() -> new RuntimeException("Todo not found with id: " + id));
     }
 
-    public void save(Todo todo) {
-        repo.save(todo);
+    public Todo save(Todo todo) {
+        return repo.save(todo);
     }
 
     public void deleteById(Long id) {
